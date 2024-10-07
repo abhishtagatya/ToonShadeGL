@@ -27,6 +27,7 @@ public:
 	glm::vec3 Up;
 	glm::vec3 Right;
 	glm::vec3 WorldUp;
+    bool active = true;
 
 	float Yaw;
 	float Pitch;
@@ -79,6 +80,8 @@ public:
 
     void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)
     {
+        if (!active) return;
+
         xoffset *= MouseSensitivity;
         yoffset *= MouseSensitivity;
 
@@ -100,6 +103,8 @@ public:
 
     void ProcessMouseScroll(float yoffset)
     {
+        if (!active) return;
+
         Zoom -= (float)yoffset;
         if (Zoom < 1.0f)
             Zoom = 1.0f;

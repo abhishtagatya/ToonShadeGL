@@ -7,6 +7,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include <imgui/imgui.h>
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
+
 #include "shader.h"
 #include "camera.h"
 
@@ -26,11 +30,14 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+double lastMousePressTime = 0.0; // Initially 0, meaning no press
+double mousePressDelay = 1.0;    // Delay of 1.0 seconds (500ms)
+
 int main() 
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "OpenGL", NULL, NULL);
@@ -45,8 +52,6 @@ int main()
 	glfwSetCursorPosCallback(window, mouseCB);
 	glfwSetScrollCallback(window, scrollCB);
 
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	{
 		std::cout << "Failed to initialize GLAD" << std::endl;
@@ -55,6 +60,15 @@ int main()
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 410 core");
+
+	ImGui::StyleColorsDark();
 
 	// DATA: START
 	float cube[] = {
@@ -141,18 +155,21 @@ int main()
 	glm::vec3 lightAmbient(0.2f, 0.2f, 0.2f);
 	glm::vec3 lightDiffuse(0.5f, 0.5f, 0.5f);
 	glm::vec3 lightSpecular(1.0f, 1.0f, 1.0f);
-	
 
+	float attConst = 1.0f;
+	float attLinear = 0.09f;
+	float attQuadrat = 0.032f;
+	
 	// Material
 	/*glm::vec3 objectAmbient(0.25f, 0.25f, 0.25f);
 	glm::vec3 objectDiffuse(0.4f, 0.4f, 0.4f);
 	glm::vec3 objectSpecular(0.78f, 0.78f, 0.78f);
 	float objectShininess = 0.6f;*/
 
-	glm::vec3 objectAmbient(0.135, 0.2225f, 0.1575f);
-	glm::vec3 objectDiffuse(0.54f, 0.9f, 0.63f);
-	glm::vec3 objectSpecular(0.316228f, 0.316228f, 0.316228f);
-	float objectShininess = 0.2f;
+	glm::vec3 objectAmbient(1.0f, 0.5f, 0.31f);
+	glm::vec3 objectDiffuse(1.0f, 0.5f, 0.31f);
+	glm::vec3 objectSpecular(0.5f, 0.5f, 0.5f);
+	float objectShininess = 32.0f;
 
 	Shader phongLightShader("Resources/Shaders/phong_light.vert", "Resources/Shaders/phong_light.frag");
 	Shader defaultShader("Resources/Shaders/default.vert", "Resources/Shaders/default.frag");
@@ -164,6 +181,45 @@ int main()
 		lastFrame = currentFrame;
 
 		processInput(window);
+
+		// GUI: START
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		//std::cout << "Frame Time: " << deltaTime << " seconds" << std::endl;
+
+		ImGui::Begin("Light Editor");
+
+		// Adjust light position
+		ImGui::Text("Light Position");
+		ImGui::SliderFloat3("Position", &lightPosition[0], -10.0f, 10.0f);
+
+		// Adjust light colors
+		ImGui::Text("Light Colors");
+		ImGui::ColorEdit3("Ambient", &lightAmbient[0]);
+		ImGui::ColorEdit3("Diffuse", &lightDiffuse[0]);
+		ImGui::ColorEdit3("Specular", &lightSpecular[0]);
+		ImGui::SliderFloat("Constant", &attConst, 0.0f, 1.0f);
+		ImGui::SliderFloat("Linear", &attLinear, 0.0f, 1.0f);
+		ImGui::SliderFloat("Quadratic", &attQuadrat, 0.0f, 1.0f);
+
+		ImGui::End();
+
+		ImGui::Begin("Material Editor");
+
+		// Adjust material colors
+		ImGui::Text("Material Colors");
+		ImGui::ColorEdit3("Ambient", &objectAmbient[0]);
+		ImGui::ColorEdit3("Diffuse", &objectDiffuse[0]);
+		ImGui::ColorEdit3("Specular", &objectSpecular[0]);
+
+		// Adjust material shininess
+		ImGui::Text("Material Shininess");
+		ImGui::SliderFloat("Shininess", &objectShininess, 0.0f, 128.0f);
+
+		ImGui::End();
+		// GUI: END
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -190,8 +246,11 @@ int main()
 		phongLightShader.SetVec3("light.ambient", lightAmbient);
 		phongLightShader.SetVec3("light.diffuse", lightDiffuse);
 		phongLightShader.SetVec3("light.specular", lightSpecular);
+		phongLightShader.SetFloat("light.constant", attConst);
+		phongLightShader.SetFloat("light.linear", attLinear);
+		phongLightShader.SetFloat("light.quadratic", attQuadrat);
 		phongLightShader.SetVec3("viewPos", mainCamera.Position);
-		phongLightShader.SetBool("toonMode", true);
+		phongLightShader.SetBool("toonMode", false);
 
 		glBindVertexArray(objectVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -209,6 +268,15 @@ int main()
 		glBindVertexArray(lightVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// Check for any errors in the rendering process
+		GLenum error = glGetError();
+		if (error != GL_NO_ERROR) {
+			std::cerr << "OpenGL Error: " << error << std::endl;
+		}
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -220,6 +288,10 @@ int main()
 
 	phongLightShader.Delete();
 	defaultShader.Delete();
+
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
@@ -240,6 +312,26 @@ void processInput(GLFWwindow* window)
 		mainCamera.ProcessKeyboard(BACKWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		mainCamera.ProcessKeyboard(RIGHT, deltaTime);
+
+	double currentTime = glfwGetTime();
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		if (currentTime - lastMousePressTime >= mousePressDelay) 
+		{
+			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL) 
+			{
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+				mainCamera.active = true;
+			}
+			else 
+			{
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				mainCamera.active = false;
+			}
+
+			lastMousePressTime = currentTime;
+		}
+	}
 
 }
 
