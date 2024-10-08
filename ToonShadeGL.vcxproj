@@ -168,6 +168,8 @@
     <None Include=".gitignore" />
     <None Include="Resources\Shaders\default.frag" />
     <None Include="Resources\Shaders\default.vert" />
+    <None Include="Resources\Shaders\outline.frag" />
+    <None Include="Resources\Shaders\outline.vert" />
     <None Include="Resources\Shaders\phong_light.frag" />
     <None Include="Resources\Shaders\phong_light.vert" />
   </ItemGroup>

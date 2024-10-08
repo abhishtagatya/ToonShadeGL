@@ -58,6 +58,7 @@ int main()
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
 	//glEnable(GL_CULL_FACE);
 	//glCullFace(GL_BACK);
 
@@ -171,7 +172,10 @@ int main()
 	glm::vec3 objectSpecular(0.5f, 0.5f, 0.5f);
 	float objectShininess = 32.0f;
 
+	float outlineScale = 1.05f;
+
 	Shader phongLightShader("Resources/Shaders/phong_light.vert", "Resources/Shaders/phong_light.frag");
+	Shader outlineShader("Resources/Shaders/outline.vert", "Resources/Shaders/outline.frag");
 	Shader defaultShader("Resources/Shaders/default.vert", "Resources/Shaders/default.frag");
 
 	while (!glfwWindowShouldClose(window))
@@ -222,14 +226,34 @@ int main()
 		// GUI: END
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		phongLightShader.Use();
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil value with reference value
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);          // Set the reference value to 1
+		glStencilMask(0xFF);                        // Enable writing to the stencil buffer
 
 		// Positional
 		glm::mat4 proj = mainCamera.GetProjectionMatrix((float)SCREEN_WIDTH / SCREEN_HEIGHT);
 		glm::mat4 view = mainCamera.GetViewMatrix();
 		glm::mat4 model = glm::mat4(1.0f);
+
+		// Light Object
+		defaultShader.Use();
+		defaultShader.SetMat4("projection", proj);
+		defaultShader.SetMat4("view", view);
+
+		glm::mat4 lightModel = glm::mat4(1.0f);
+		lightModel = glm::translate(lightModel, lightPosition);
+		lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+		defaultShader.SetMat4("model", lightModel);
+
+		glBindVertexArray(lightVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// 1st Pass : Phong Shading
+		glStencilMask(0xFF);  // Enable writing to the stencil buffer
+
+		phongLightShader.Use();
 
 		phongLightShader.SetMat4("projection", proj);
 		phongLightShader.SetMat4("view", view);
@@ -250,23 +274,30 @@ int main()
 		phongLightShader.SetFloat("light.linear", attLinear);
 		phongLightShader.SetFloat("light.quadratic", attQuadrat);
 		phongLightShader.SetVec3("viewPos", mainCamera.Position);
-		phongLightShader.SetBool("toonMode", false);
+		phongLightShader.SetBool("toonMode", true);
 
 		glBindVertexArray(objectVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		// Light Object
-		defaultShader.Use();
-		defaultShader.SetMat4("projection", proj);
-		defaultShader.SetMat4("view", view);
+		// 2nd Pass : Outline Shading
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);  // Draw where stencil value is not 1
+		glStencilMask(0x00);                  // Disable writing to the stencil buffer
+		glDisable(GL_DEPTH_TEST);             // Disable depth testing to avoid z-fighting
 
-		glm::mat4 lightModel = glm::mat4(1.0f);
-		lightModel = glm::translate(lightModel, lightPosition);
-		lightModel = glm::scale(lightModel, glm::vec3(0.2f));
-		defaultShader.SetMat4("model", lightModel);
+		outlineShader.Use();
 
-		glBindVertexArray(lightVAO);
+		model = glm::scale(model, glm::vec3(outlineScale, outlineScale, outlineScale));
+
+		outlineShader.SetMat4("projection", proj);
+		outlineShader.SetMat4("view", view);
+		outlineShader.SetMat4("model", model);
+
+		glBindVertexArray(objectVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		glStencilMask(0xFF);
+		glStencilFunc(GL_ALWAYS, 0, 0xFF);
+		glEnable(GL_DEPTH_TEST);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

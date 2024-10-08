@@ -62,7 +62,9 @@ void main()
 
 	if (toonMode)
 	{	
-		if (spec < 0.5) spec = 0.0f;
+		if (spec < 0.1) spec = 0.0f;
+		else if (spec < 0.4) spec = 0.4f;
+		else if (spec < 0.8) spec = 0.8f;
 		else spec = 1.0f;
 	}
 

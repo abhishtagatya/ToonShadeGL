@@ -113,5 +113,11 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include=".gitignore" />
+    <None Include="Resources\Shaders\outline.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Resources\Shaders\outline.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
