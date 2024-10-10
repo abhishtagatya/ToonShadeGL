@@ -33,6 +33,8 @@ float lastFrame = 0.0f;
 double lastMousePressTime = 0.0; // Initially 0, meaning no press
 double mousePressDelay = 1.0;    // Delay of 1.0 seconds (500ms)
 
+bool polygonMode = false;
+
 int main() 
 {
 	glfwInit();
@@ -59,8 +61,9 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
-	//glEnable(GL_CULL_FACE);
-	//glCullFace(GL_BACK);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);   // Cull back faces (this is default, but ensure it's set)
+	glFrontFace(GL_CCW);   // Counter-clockwise is the front face (also default)
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
@@ -74,52 +77,50 @@ int main()
 	// DATA: START
 	float cube[] = {
 		// Front face
-		-1.0f, -1.0f,  1.0f, 0.0f,  0.0f,  1.0f,   // Bottom-left
-		 1.0f, -1.0f,  1.0f, 0.0f,  0.0f,  1.0f,   // Bottom-right
-		 1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f,   // Top-right
-		 1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f,   // Top-right
-		-1.0f,  1.0f,  1.0f, 0.0f,  0.0f,  1.0f,   // Top-left
-		-1.0f, -1.0f,  1.0f, 0.0f,  0.0f,  1.0f,   // Bottom-left
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
 
 		// Back face
-		-1.0f, -1.0f, -1.0f, 0.0f,  0.0f, -1.0f,   // Bottom-left
-		 1.0f, -1.0f, -1.0f, 0.0f,  0.0f, -1.0f,   // Bottom-right
-		 1.0f,  1.0f, -1.0f, 0.0f,  0.0f, -1.0f,   // Top-right
-		 1.0f,  1.0f, -1.0f, 0.0f,  0.0f, -1.0f,   // Top-right
-		-1.0f,  1.0f, -1.0f, 0.0f,  0.0f, -1.0f,   // Top-left
-		-1.0f, -1.0f, -1.0f, 0.0f,  0.0f, -1.0f,   // Bottom-left
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
 		// Left face
-		-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f,   // Top-right
-		-1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f,   // Top-left
-		-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f,   // Bottom-left
-		-1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f,   // Bottom-left
-		-1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f,   // Bottom-right
-		-1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f,   // Top-right
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
 
 		// Right face
-		 1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f,   // Top-left
-		 1.0f, -1.0f, -1.0f, 1.0f,  0.0f,  0.0f,   // Bottom-right
-		 1.0f,  1.0f, -1.0f, 1.0f,  0.0f,  0.0f,   // Top-right
-		 1.0f, -1.0f, -1.0f, 1.0f,  0.0f,  0.0f,   // Bottom-right
-		 1.0f,  1.0f,  1.0f, 1.0f,  0.0f,  0.0f,   // Top-left
-		 1.0f, -1.0f,  1.0f, 1.0f,  0.0f,  0.0f,   // Bottom-left
-
-		 // Top face
-		 -1.0f,  1.0f, -1.0f, 0.0f,  1.0f,  0.0f,   // Top-left
-		  1.0f,  1.0f, -1.0f, 0.0f,  1.0f,  0.0f,   // Top-right
-		  1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f,   // Bottom-right
-		  1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f,   // Bottom-right
-		 -1.0f,  1.0f,  1.0f, 0.0f,  1.0f,  0.0f,   // Bottom-left
-		 -1.0f,  1.0f, -1.0f, 0.0f,  1.0f,  0.0f,   // Top-left
+		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
 		 // Bottom face
-		 -1.0f, -1.0f, -1.0f, 0.0f, -1.0f,  0.0f,   // Top-left
-		  1.0f, -1.0f, -1.0f, 0.0f, -1.0f,  0.0f,   // Top-right
-		  1.0f, -1.0f,  1.0f, 0.0f, -1.0f,  0.0f,   // Bottom-right
-		  1.0f, -1.0f,  1.0f, 0.0f, -1.0f,  0.0f,   // Bottom-right
-		 -1.0f, -1.0f,  1.0f, 0.0f, -1.0f,  0.0f,   // Bottom-left
-		 -1.0f, -1.0f, -1.0f, 0.0f, -1.0f,  0.0f    // Top-left
+		 -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		  0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		  0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		 -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+
+		 // Top face
+		 -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		  0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		  0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+	};
+
+	// Element Buffer Object (EBO)
+	unsigned int cubeIndices[] = {
+		0,  1,  2,  2,  3,  0,  // Front face
+		8,  9,  10, 10, 11, 8,  // Left face
+		12, 13, 14, 14, 15, 12, // Right face
+		20, 21, 22, 22, 23, 20,  // Top face
+		4,  6,  5,  7,  6,  4,  // Back face
+		16, 17, 18, 18, 19, 16, // Bottom face
 	};
 
 	GLuint objectVAO, objectVBO;
@@ -138,6 +139,12 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
+	GLuint objectEBO;
+	glGenBuffers(1, &objectEBO);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objectEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
+
 	GLuint lightVAO, lightVBO;
 	glGenVertexArrays(1, &lightVAO);
 	glGenBuffers(1, &lightVBO);
@@ -151,7 +158,7 @@ int main()
 	// DATA: END
 
 	// Positions
-	glm::vec3 lightPosition(2.0f, 5.0f, -5.0f);
+	glm::vec3 lightPosition(-1.0f, 6.0f, -3.0f);
 
 	glm::vec3 lightAmbient(0.2f, 0.2f, 0.2f);
 	glm::vec3 lightDiffuse(0.5f, 0.5f, 0.5f);
@@ -166,6 +173,18 @@ int main()
 	glm::vec3 objectDiffuse(0.4f, 0.4f, 0.4f);
 	glm::vec3 objectSpecular(0.78f, 0.78f, 0.78f);
 	float objectShininess = 0.6f;*/
+
+	glm::vec3 objectPositions[] = {
+		glm::vec3(0.0f,  0.0f,  0.0f),
+		glm::vec3(2.0f,  5.0f, 10.0f),
+		glm::vec3(-1.5f, -12.2f, -2.5f),
+		glm::vec3(-9.8f, -2.0f, -8.3f),
+		glm::vec3(2.4f, 10.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -15.5f),
+		glm::vec3(16.3f, -2.0f, 2.5f),
+		glm::vec3(8.5f,  6.2f, -18.5f),
+		glm::vec3(-14.3f,  -4.0f, -1.5f)
+	};
 
 	glm::vec3 objectAmbient(1.0f, 0.5f, 0.31f);
 	glm::vec3 objectDiffuse(1.0f, 0.5f, 0.31f);
@@ -197,7 +216,7 @@ int main()
 
 		// Adjust light position
 		ImGui::Text("Light Position");
-		ImGui::SliderFloat3("Position", &lightPosition[0], -10.0f, 10.0f);
+		ImGui::SliderFloat3("Position", &lightPosition[0], -15.0f, 15.0f);
 
 		// Adjust light colors
 		ImGui::Text("Light Colors");
@@ -228,6 +247,8 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objectEBO);
+
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil value with reference value
 		glStencilFunc(GL_ALWAYS, 1, 0xFF);          // Set the reference value to 1
 		glStencilMask(0xFF);                        // Enable writing to the stencil buffer
@@ -235,7 +256,6 @@ int main()
 		// Positional
 		glm::mat4 proj = mainCamera.GetProjectionMatrix((float)SCREEN_WIDTH / SCREEN_HEIGHT);
 		glm::mat4 view = mainCamera.GetViewMatrix();
-		glm::mat4 model = glm::mat4(1.0f);
 
 		// Light Object
 		defaultShader.Use();
@@ -248,16 +268,19 @@ int main()
 		defaultShader.SetMat4("model", lightModel);
 
 		glBindVertexArray(lightVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+		//glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// 1st Pass : Phong Shading
 		glStencilMask(0xFF);  // Enable writing to the stencil buffer
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_BACK);
 
 		phongLightShader.Use();
 
 		phongLightShader.SetMat4("projection", proj);
 		phongLightShader.SetMat4("view", view);
-		phongLightShader.SetMat4("model", model);
 
 		// Material
 		phongLightShader.SetVec3("material.ambient", objectAmbient);
@@ -277,27 +300,50 @@ int main()
 		phongLightShader.SetBool("toonMode", true);
 
 		glBindVertexArray(objectVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		for (unsigned int i = 0; i < sizeof(objectPositions) / sizeof(glm::vec3); i++)
+		{
+			// calculate the model matrix for each object and pass it to shader before drawing
+			float angle = 20.0f * i;
+
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, objectPositions[i]);
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			phongLightShader.SetMat4("model", model);
+
+			glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+		}
 
 		// 2nd Pass : Outline Shading
 		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);  // Draw where stencil value is not 1
 		glStencilMask(0x00);                  // Disable writing to the stencil buffer
 		glDisable(GL_DEPTH_TEST);             // Disable depth testing to avoid z-fighting
+		glCullFace(GL_FRONT);
 
 		outlineShader.Use();
 
-		model = glm::scale(model, glm::vec3(outlineScale, outlineScale, outlineScale));
-
 		outlineShader.SetMat4("projection", proj);
 		outlineShader.SetMat4("view", view);
-		outlineShader.SetMat4("model", model);
 
 		glBindVertexArray(objectVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		for (unsigned int i = 0; i < sizeof(objectPositions) / sizeof(glm::vec3); i++)
+		{
+			// calculate the model matrix for each object and pass it to shader before drawing
+			float angle = 20.0f * i;
+
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, objectPositions[i]);
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			model = glm::scale(model, glm::vec3(outlineScale));
+
+			outlineShader.SetMat4("model", model);
+
+			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+		}
 
 		glStencilMask(0xFF);
 		glStencilFunc(GL_ALWAYS, 0, 0xFF);
 		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -316,6 +362,7 @@ int main()
 	glDeleteVertexArrays(1, &lightVAO);
 	glDeleteBuffers(1, &objectVBO);
 	glDeleteBuffers(1, &lightVBO);
+	glDeleteBuffers(1, &objectEBO);
 
 	phongLightShader.Delete();
 	defaultShader.Delete();
@@ -361,6 +408,22 @@ void processInput(GLFWwindow* window)
 			}
 
 			lastMousePressTime = currentTime;
+		}
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+	{
+		if (currentTime - lastMousePressTime >= mousePressDelay)
+		{
+			if (!polygonMode)
+			{
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+			else
+			{
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+			}
+			polygonMode = !polygonMode;
 		}
 	}
 
