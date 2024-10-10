@@ -10,7 +10,16 @@ struct Material
 	float shininess;
 };
 
-struct Light
+struct DirectionLight
+{
+	vec3 direction;
+
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+};
+
+struct PointLight
 {
 	vec3 position;
 	
@@ -23,66 +32,92 @@ struct Light
 	float quadratic;
 };
 
+struct PhongVar
+{
+	vec3 ambient;
+	vec3 specular;
+};
+
 in vec3 fragPos;
 in vec3 fragNormal;
 
 uniform Material material;
-uniform Light light;
+uniform DirectionLight directionLight;
+uniform PointLight pointLight;
 uniform vec3 viewPos;
 uniform bool toonMode;
+
+float toonQuantize5(float value)
+{
+	if (value < 0.1) return (0.0);
+	else if (value < 0.2) return (0.2);
+	else if (value < 0.4) return (0.4);
+	else if (value < 0.6) return (0.6);
+	else if (value < 0.8) return (0.8);
+	else return (1.0);
+}
+
+float toonQuantize4(float value)
+{
+	if (value < 0.1) return (0.0);
+	else if (value < 0.4) return (0.4);
+	else if (value < 0.8) return (0.6);
+	else return (1.0);
+}
+
+vec3 phongPointLight(PointLight pl, vec3 norm, vec3 viewDir)
+{
+	// Attenuation
+	float dist = length(pointLight.position - fragPos);
+	float attn = 1.0 / (pointLight.constant + (pointLight.linear * dist) + (pointLight.quadratic * (dist * dist)));
+
+	// Ambient
+	vec3 ambient = pl.ambient * material.ambient * attn;
+
+	// Diffuse
+	vec3 lightDir = normalize(pl.position - fragPos);
+
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = pl.diffuse * (toonQuantize5(diff) * material.diffuse) * attn;
+
+	// Specular
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+	vec3 specular = pl.specular * (toonQuantize4(spec) * material.specular) * attn;
+
+	return (ambient + diffuse + specular);
+}
+
+vec3 phongDirectionLight(DirectionLight dl, vec3 norm, vec3 viewDir)
+{
+	// Ambient
+	vec3 ambient = dl.ambient * material.ambient;
+	
+	// Diffuse
+	vec3 lightDir = normalize(-dl.direction);
+	float diff = max(dot(norm, lightDir), 0.0);
+	vec3 diffuse = dl.diffuse * (toonQuantize5(diff) * material.diffuse);
+
+	// Specular
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+	vec3 specular = dl.specular * (toonQuantize4(spec) * material.specular);
+
+	return (ambient + diffuse + specular);
+}
 
 void main()
 {
 	int toonLevels = 5;
 
-	// Ambient
-	vec3 ambient = light.ambient * material.ambient;
-
-	// Diffuse
 	vec3 norm = normalize(fragNormal);
-	vec3 lightDir = normalize(light.position - fragPos);
-	float diff = max(dot(norm, lightDir), 0.0);
-
-	if (toonMode)
-	{	
-		if (diff < 0.1) diff = 0.0f;
-		else if (diff < 0.2) diff = 0.2f;
-		else if (diff < 0.4) diff = 0.4f;
-		else if (diff < 0.6) diff = 0.6f;
-		else if (diff < 0.8) diff = 0.8f;
-		else diff = 1.0f;
-	}
-
-	vec3 diffuse = light.diffuse * (diff * material.diffuse);
-
-	// Specular
 	vec3 viewDir = normalize(viewPos - fragPos);
-	vec3 reflectDir = reflect(-lightDir, norm);
-	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
 
-	if (toonMode)
-	{	
-		if (spec < 0.1) spec = 0.0f;
-		else if (spec < 0.4) spec = 0.4f;
-		else if (spec < 0.8) spec = 0.8f;
-		else spec = 1.0f;
-	}
-
-	vec3 specular = light.specular * (spec * material.specular);
-
-	// Attenuation
-	float dist = length(light.position - fragPos);
-	float attn = 1.0 / (light.constant + (light.linear * dist) + (light.quadratic * (dist * dist)));
-
-	ambient *= attn;
-	diffuse *= attn;
-	specular *= attn;
-
-	vec3 result = ambient + diffuse + specular;
+	vec3 result = phongDirectionLight(directionLight, norm, viewDir) + phongPointLight(pointLight, norm, viewDir);
 
 	// Edge Detection
 	if (toonMode) {
-		float edge = step(0.05, dot(norm, lightDir));
+		float edge = step(0.2, dot(norm, viewDir));
 		FragColor = vec4(result * edge, 1.0f);
 	} else {
 		FragColor = vec4(result, 1.0);

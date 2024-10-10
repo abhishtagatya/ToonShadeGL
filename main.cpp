@@ -30,8 +30,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-double lastMousePressTime = 0.0; // Initially 0, meaning no press
-double mousePressDelay = 1.0;    // Delay of 1.0 seconds (500ms)
+double lastInputDelay = 0.0; // Initially 0, meaning no press
+double inputDelay = 1.0;    // Delay of 1.0 seconds (500ms)
 
 bool polygonMode = false;
 
@@ -157,16 +157,23 @@ int main()
 	glEnableVertexAttribArray(0);
 	// DATA: END
 
-	// Positions
-	glm::vec3 lightPosition(-1.0f, 6.0f, -3.0f);
+	// Point Light
+	glm::vec3 plPosition(-1.0f, 6.0f, -3.0f);
 
-	glm::vec3 lightAmbient(0.2f, 0.2f, 0.2f);
-	glm::vec3 lightDiffuse(0.5f, 0.5f, 0.5f);
-	glm::vec3 lightSpecular(1.0f, 1.0f, 1.0f);
+	glm::vec3 plAmbient(0.2f, 0.2f, 0.2f);
+	glm::vec3 plDiffuse(0.5f, 0.5f, 0.5f);
+	glm::vec3 plSpecular(1.0f, 1.0f, 1.0f);
 
 	float attConst = 1.0f;
 	float attLinear = 0.09f;
 	float attQuadrat = 0.032f;
+
+	// Point Light
+	glm::vec3 dlDirection(-1.0f, -1.0f, 3.0f);
+
+	glm::vec3 dlAmbient(0.1f, 0.1f, 0.1f);
+	glm::vec3 dlDiffuse(0.3f, 0.3f, 0.3f);
+	glm::vec3 dlSpecular(1.0f, 1.0f, 1.0f);
 	
 	// Material
 	/*glm::vec3 objectAmbient(0.25f, 0.25f, 0.25f);
@@ -214,18 +221,33 @@ int main()
 
 		ImGui::Begin("Light Editor");
 
-		// Adjust light position
-		ImGui::Text("Light Position");
-		ImGui::SliderFloat3("Position", &lightPosition[0], -15.0f, 15.0f);
+		// Adjust point light position
+		if (ImGui::CollapsingHeader("Point Light")) {
+			// Add UI elements within the collapsible section
+			ImGui::Text("Light Position");
+			ImGui::SliderFloat3("Position", &plPosition[0], -15.0f, 15.0f);
 
-		// Adjust light colors
-		ImGui::Text("Light Colors");
-		ImGui::ColorEdit3("Ambient", &lightAmbient[0]);
-		ImGui::ColorEdit3("Diffuse", &lightDiffuse[0]);
-		ImGui::ColorEdit3("Specular", &lightSpecular[0]);
-		ImGui::SliderFloat("Constant", &attConst, 0.0f, 1.0f);
-		ImGui::SliderFloat("Linear", &attLinear, 0.0f, 1.0f);
-		ImGui::SliderFloat("Quadratic", &attQuadrat, 0.0f, 1.0f);
+			// Adjust light colors
+			ImGui::Text("Light Colors");
+			ImGui::ColorEdit3("PL Ambient", &plAmbient[0]);
+			ImGui::ColorEdit3("PL Diffuse", &plDiffuse[0]);
+			ImGui::ColorEdit3("PL Specular", &plSpecular[0]);
+			ImGui::SliderFloat("PL Constant", &attConst, 0.0f, 1.0f);
+			ImGui::SliderFloat("PL Linear", &attLinear, 0.0f, 1.0f);
+			ImGui::SliderFloat("PL Quadratic", &attQuadrat, 0.0f, 1.0f);
+		}
+
+		if (ImGui::CollapsingHeader("Directional Light")) {
+			// Add UI elements within the collapsible section
+			ImGui::Text("Light Direction");
+			ImGui::SliderFloat3("DL Direction", &dlDirection[0], -15.0f, 15.0f);
+
+			// Adjust light colors
+			ImGui::Text("Light Colors");
+			ImGui::ColorEdit3("DL Ambient", &dlAmbient[0]);
+			ImGui::ColorEdit3("DL Diffuse", &dlDiffuse[0]);
+			ImGui::ColorEdit3("DL Specular", &dlSpecular[0]);
+		}
 
 		ImGui::End();
 
@@ -263,7 +285,7 @@ int main()
 		defaultShader.SetMat4("view", view);
 
 		glm::mat4 lightModel = glm::mat4(1.0f);
-		lightModel = glm::translate(lightModel, lightPosition);
+		lightModel = glm::translate(lightModel, plPosition);
 		lightModel = glm::scale(lightModel, glm::vec3(0.2f));
 		defaultShader.SetMat4("model", lightModel);
 
@@ -289,13 +311,18 @@ int main()
 		phongLightShader.SetFloat("material.shininess", objectShininess);
 
 		// Lighting
-		phongLightShader.SetVec3("light.position", lightPosition);
-		phongLightShader.SetVec3("light.ambient", lightAmbient);
-		phongLightShader.SetVec3("light.diffuse", lightDiffuse);
-		phongLightShader.SetVec3("light.specular", lightSpecular);
-		phongLightShader.SetFloat("light.constant", attConst);
-		phongLightShader.SetFloat("light.linear", attLinear);
-		phongLightShader.SetFloat("light.quadratic", attQuadrat);
+		phongLightShader.SetVec3("directionLight.direction", dlDirection);
+		phongLightShader.SetVec3("directionLight.ambient", dlAmbient);
+		phongLightShader.SetVec3("directionLight.diffuse", dlDiffuse);
+		phongLightShader.SetVec3("directionLight.specular", dlSpecular);
+
+		phongLightShader.SetVec3("pointLight.position", plPosition);
+		phongLightShader.SetVec3("pointLight.ambient", plAmbient);
+		phongLightShader.SetVec3("pointLight.diffuse", plDiffuse);
+		phongLightShader.SetVec3("pointLight.specular", plSpecular);
+		phongLightShader.SetFloat("pointLight.constant", attConst);
+		phongLightShader.SetFloat("pointLight.linear", attLinear);
+		phongLightShader.SetFloat("pointLight.quadratic", attQuadrat);
 		phongLightShader.SetVec3("viewPos", mainCamera.Position);
 		phongLightShader.SetBool("toonMode", true);
 
@@ -394,7 +421,7 @@ void processInput(GLFWwindow* window)
 	double currentTime = glfwGetTime();
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 	{
-		if (currentTime - lastMousePressTime >= mousePressDelay) 
+		if (currentTime - lastInputDelay >= inputDelay)
 		{
 			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL) 
 			{
@@ -407,13 +434,13 @@ void processInput(GLFWwindow* window)
 				mainCamera.active = false;
 			}
 
-			lastMousePressTime = currentTime;
+			lastInputDelay = currentTime;
 		}
 	}
 
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 	{
-		if (currentTime - lastMousePressTime >= mousePressDelay)
+		if (currentTime - lastInputDelay >= inputDelay)
 		{
 			if (!polygonMode)
 			{
@@ -423,7 +450,9 @@ void processInput(GLFWwindow* window)
 			{
 				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			}
+
 			polygonMode = !polygonMode;
+			lastInputDelay = currentTime;
 		}
 	}
 
