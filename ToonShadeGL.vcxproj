@@ -148,6 +148,7 @@
     <ClCompile Include="Libraries\include\imgui\imgui_widgets.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="torus.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
@@ -163,6 +164,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="resource1.h" />
     <ClInclude Include="shader.h" />
+    <ClInclude Include="torus.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -13,6 +14,7 @@
 
 #include "shader.h"
 #include "camera.h"
+#include "torus.h"
 
 void framebufferSizeCB(GLFWwindow* window, int width, int height);
 void mouseCB(GLFWwindow* window, double xpos, double ypos);
@@ -34,6 +36,35 @@ double lastInputDelay = 0.0; // Initially 0, meaning no press
 double inputDelay = 1.0;    // Delay of 1.0 seconds (500ms)
 
 bool polygonMode = false;
+
+void checkOpenGLError(const std::string& functionName) {
+	GLenum error = glGetError();
+	if (error != GL_NO_ERROR) {
+		switch (error) {
+		case GL_INVALID_ENUM:
+			std::cerr << "OpenGL Error in " << functionName << ": GL_INVALID_ENUM" << std::endl;
+			break;
+		case GL_INVALID_VALUE:
+			std::cerr << "OpenGL Error in " << functionName << ": GL_INVALID_VALUE" << std::endl;
+			break;
+		case GL_INVALID_OPERATION:
+			std::cerr << "OpenGL Error in " << functionName << ": GL_INVALID_OPERATION" << std::endl;
+			break;
+		case GL_OUT_OF_MEMORY:
+			std::cerr << "OpenGL Error in " << functionName << ": GL_OUT_OF_MEMORY" << std::endl;
+			break;
+		case GL_STACK_UNDERFLOW:
+			std::cerr << "OpenGL Error in " << functionName << ": GL_STACK_UNDERFLOW" << std::endl;
+			break;
+		case GL_STACK_OVERFLOW:
+			std::cerr << "OpenGL Error in " << functionName << ": GL_STACK_OVERFLOW" << std::endl;
+			break;
+		default:
+			std::cerr << "OpenGL Error in " << functionName << ": Unknown error" << std::endl;
+			break;
+		}
+	}
+}
 
 int main() 
 {
@@ -123,18 +154,27 @@ int main()
 		16, 17, 18, 18, 19, 16, // Bottom face
 	};
 
+	Torus torus(0.5f, 1.0f, 16, 16);
+	float* combinedData = torus.combinePositionAndNormal();
+	int totalVertices = torus.getTotalVertices();
+	int totalIndices = torus.getTotalIndices();
+
 	GLuint objectVAO, objectVBO;
 	glGenVertexArrays(1, &objectVAO);
 	glGenBuffers(1, &objectVBO);
 
 	glBindVertexArray(objectVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, objectVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, totalVertices * 6 * sizeof(float), combinedData, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
+
+	GLint bufferSize;
+	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+	std::cout << "Size of the VBO data uploaded: " << bufferSize << " bytes" << std::endl;
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -143,7 +183,10 @@ int main()
 	glGenBuffers(1, &objectEBO);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objectEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, totalIndices * sizeof(unsigned int), torus.getIndices(), GL_STATIC_DRAW);
+
+	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+	std::cout << "Size of the EBO data uploaded: " << bufferSize << " bytes" << std::endl;
 
 	GLuint lightVAO, lightVBO;
 	glGenVertexArrays(1, &lightVAO);
@@ -154,11 +197,25 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
-	glEnableVertexAttribArray(0);
+
+	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+	std::cout << "Size of the VBO data uploaded: " << bufferSize << " bytes" << std::endl;
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	GLuint lightEBO;
+	glGenBuffers(1, &lightEBO);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cubeIndices), cubeIndices, GL_STATIC_DRAW);
+
+	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
+	std::cout << "Size of the EBO data uploaded: " << bufferSize << " bytes" << std::endl;
 	// DATA: END
 
 	// Point Light
-	glm::vec3 plPosition(-1.0f, 6.0f, -3.0f);
+	glm::vec3 plPosition(0.0f, 0.0f, 0.0f);
 
 	glm::vec3 plAmbient(0.2f, 0.2f, 0.2f);
 	glm::vec3 plDiffuse(0.5f, 0.5f, 0.5f);
@@ -269,8 +326,6 @@ int main()
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objectEBO);
-
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil value with reference value
 
 		// Positional
@@ -284,11 +339,14 @@ int main()
 
 		glm::mat4 lightModel = glm::mat4(1.0f);
 		lightModel = glm::translate(lightModel, plPosition);
-		lightModel = glm::scale(lightModel, glm::vec3(0.2f));
+		lightModel = glm::scale(lightModel, glm::vec3(20.0f));
 		defaultShader.SetMat4("model", lightModel);
 
+		// Check why this VAO is not working: using objectVAO it works
 		glBindVertexArray(lightVAO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightEBO);
 		glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+		//checkOpenGLError("Draw Cube");
 
 		for (unsigned int i = 0; i < sizeof(objectPositions) / sizeof(glm::vec3); i++)
 		{
@@ -334,7 +392,9 @@ int main()
 			phongLightShader.SetBool("toonMode", true);
 
 			glBindVertexArray(objectVAO);
-			glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objectEBO);
+			glDrawElements(GL_TRIANGLES, totalIndices, GL_UNSIGNED_INT, 0);
+			checkOpenGLError("Draw Torus");
 
 			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
 			glStencilMask(0x00);  // Enable stencil writing
@@ -348,7 +408,8 @@ int main()
 			outlineShader.SetMat4("model", model);
 
 			glBindVertexArray(objectVAO);
-			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objectEBO);
+			glDrawElements(GL_TRIANGLES, totalIndices, GL_UNSIGNED_INT, 0);
 
 			glStencilFunc(GL_ALWAYS, 1, 0xFF);
 			glStencilMask(0xFF);
@@ -376,6 +437,7 @@ int main()
 	glDeleteBuffers(1, &objectVBO);
 	glDeleteBuffers(1, &lightVBO);
 	glDeleteBuffers(1, &objectEBO);
+	glDeleteBuffers(1, &lightEBO);
 
 	phongLightShader.Delete();
 	defaultShader.Delete();
