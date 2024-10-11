@@ -272,8 +272,6 @@ int main()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, objectEBO);
 
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);  // Replace stencil value with reference value
-		glStencilFunc(GL_ALWAYS, 1, 0xFF);          // Set the reference value to 1
-		glStencilMask(0xFF);                        // Enable writing to the stencil buffer
 
 		// Positional
 		glm::mat4 proj = mainCamera.GetProjectionMatrix((float)SCREEN_WIDTH / SCREEN_HEIGHT);
@@ -291,70 +289,9 @@ int main()
 
 		glBindVertexArray(lightVAO);
 		glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
-		//glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		// 1st Pass : Phong Shading
-		glStencilMask(0xFF);  // Enable writing to the stencil buffer
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-
-		phongLightShader.Use();
-
-		phongLightShader.SetMat4("projection", proj);
-		phongLightShader.SetMat4("view", view);
-
-		// Material
-		phongLightShader.SetVec3("material.ambient", objectAmbient);
-		phongLightShader.SetVec3("material.diffuse", objectDiffuse);
-		phongLightShader.SetVec3("material.specular", objectSpecular);
-		phongLightShader.SetFloat("material.shininess", objectShininess);
-
-		// Lighting
-		phongLightShader.SetVec3("directionLight.direction", dlDirection);
-		phongLightShader.SetVec3("directionLight.ambient", dlAmbient);
-		phongLightShader.SetVec3("directionLight.diffuse", dlDiffuse);
-		phongLightShader.SetVec3("directionLight.specular", dlSpecular);
-
-		phongLightShader.SetVec3("pointLight.position", plPosition);
-		phongLightShader.SetVec3("pointLight.ambient", plAmbient);
-		phongLightShader.SetVec3("pointLight.diffuse", plDiffuse);
-		phongLightShader.SetVec3("pointLight.specular", plSpecular);
-		phongLightShader.SetFloat("pointLight.constant", attConst);
-		phongLightShader.SetFloat("pointLight.linear", attLinear);
-		phongLightShader.SetFloat("pointLight.quadratic", attQuadrat);
-		phongLightShader.SetVec3("viewPos", mainCamera.Position);
-		phongLightShader.SetBool("toonMode", true);
-
-		glBindVertexArray(objectVAO);
 		for (unsigned int i = 0; i < sizeof(objectPositions) / sizeof(glm::vec3); i++)
 		{
-			// calculate the model matrix for each object and pass it to shader before drawing
-			float angle = 20.0f * i;
-
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, objectPositions[i]);
-			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			phongLightShader.SetMat4("model", model);
-
-			glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
-		}
-
-		// 2nd Pass : Outline Shading
-		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);  // Draw where stencil value is not 1
-		glStencilMask(0x00);                  // Disable writing to the stencil buffer
-		glDisable(GL_DEPTH_TEST);             // Disable depth testing to avoid z-fighting
-		glCullFace(GL_FRONT);
-
-		outlineShader.Use();
-
-		outlineShader.SetMat4("projection", proj);
-		outlineShader.SetMat4("view", view);
-
-		glBindVertexArray(objectVAO);
-		for (unsigned int i = 0; i < sizeof(objectPositions) / sizeof(glm::vec3); i++)
-		{
-			// calculate the model matrix for each object and pass it to shader before drawing
 			float angle = 20.0f * i;
 
 			glm::mat4 model = glm::mat4(1.0f);
@@ -362,15 +299,64 @@ int main()
 			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
 			model = glm::scale(model, glm::vec3(outlineScale));
 
+			// 1st Pass : Phong Shading
+			glStencilFunc(GL_ALWAYS, 1, 0xFF);
+			glStencilMask(0xFF);
+			glEnable(GL_CULL_FACE);
+			glCullFace(GL_BACK);
+
+			phongLightShader.Use();
+
+			phongLightShader.SetMat4("projection", proj);
+			phongLightShader.SetMat4("view", view);
+			phongLightShader.SetMat4("model", model);
+
+			// Material
+			phongLightShader.SetVec3("material.ambient", objectAmbient);
+			phongLightShader.SetVec3("material.diffuse", objectDiffuse);
+			phongLightShader.SetVec3("material.specular", objectSpecular);
+			phongLightShader.SetFloat("material.shininess", objectShininess);
+
+			// Lighting
+			phongLightShader.SetVec3("directionLight.direction", dlDirection);
+			phongLightShader.SetVec3("directionLight.ambient", dlAmbient);
+			phongLightShader.SetVec3("directionLight.diffuse", dlDiffuse);
+			phongLightShader.SetVec3("directionLight.specular", dlSpecular);
+
+			phongLightShader.SetVec3("pointLight.position", plPosition);
+			phongLightShader.SetVec3("pointLight.ambient", plAmbient);
+			phongLightShader.SetVec3("pointLight.diffuse", plDiffuse);
+			phongLightShader.SetVec3("pointLight.specular", plSpecular);
+			phongLightShader.SetFloat("pointLight.constant", attConst);
+			phongLightShader.SetFloat("pointLight.linear", attLinear);
+			phongLightShader.SetFloat("pointLight.quadratic", attQuadrat);
+			phongLightShader.SetVec3("viewPos", mainCamera.Position);
+			phongLightShader.SetBool("toonMode", true);
+
+			glBindVertexArray(objectVAO);
+			glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
+
+			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+			glStencilMask(0x00);  // Enable stencil writing
+			glCullFace(GL_FRONT);
+
+			outlineShader.Use();
+
+			model = glm::scale(model, glm::vec3(outlineScale));
+			outlineShader.SetMat4("projection", proj);
+			outlineShader.SetMat4("view", view);
 			outlineShader.SetMat4("model", model);
 
+			glBindVertexArray(objectVAO);
 			glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-		}
 
-		glStencilMask(0xFF);
-		glStencilFunc(GL_ALWAYS, 0, 0xFF);
-		glEnable(GL_DEPTH_TEST);
-		glDisable(GL_CULL_FACE);
+			glStencilFunc(GL_ALWAYS, 1, 0xFF);
+			glStencilMask(0xFF);
+
+			glCullFace(GL_BACK);
+
+			glClear(GL_STENCIL_BUFFER_BIT);
+		}
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
