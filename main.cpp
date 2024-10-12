@@ -197,6 +197,7 @@ int main()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 6, (void*)0);
+	glEnableVertexAttribArray(0);
 
 	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &bufferSize);
 	std::cout << "Size of the VBO data uploaded: " << bufferSize << " bytes" << std::endl;
@@ -215,7 +216,7 @@ int main()
 	// DATA: END
 
 	// Point Light
-	glm::vec3 plPosition(0.0f, 0.0f, 0.0f);
+	glm::vec3 plPosition(0.0f, 0.0f, -10.0f);
 
 	glm::vec3 plAmbient(0.2f, 0.2f, 0.2f);
 	glm::vec3 plDiffuse(0.5f, 0.5f, 0.5f);
@@ -339,14 +340,13 @@ int main()
 
 		glm::mat4 lightModel = glm::mat4(1.0f);
 		lightModel = glm::translate(lightModel, plPosition);
-		lightModel = glm::scale(lightModel, glm::vec3(20.0f));
 		defaultShader.SetMat4("model", lightModel);
 
 		// Check why this VAO is not working: using objectVAO it works
 		glBindVertexArray(lightVAO);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lightEBO);
 		glDrawElements(GL_TRIANGLES, sizeof(cubeIndices) / sizeof(unsigned int), GL_UNSIGNED_INT, 0);
-		//checkOpenGLError("Draw Cube");
+		checkOpenGLError("Draw Cube");
 
 		for (unsigned int i = 0; i < sizeof(objectPositions) / sizeof(glm::vec3); i++)
 		{
