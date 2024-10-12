@@ -14,6 +14,8 @@
 
 #include "shader.h"
 #include "camera.h"
+#include "light_manager.h"
+#include "light_editor.h"
 #include "torus.h"
 
 void framebufferSizeCB(GLFWwindow* window, int width, int height);
@@ -215,30 +217,11 @@ int main()
 	std::cout << "Size of the EBO data uploaded: " << bufferSize << " bytes" << std::endl;
 	// DATA: END
 
-	// Point Light
-	glm::vec3 plPosition(0.0f, 0.0f, -10.0f);
-
-	glm::vec3 plAmbient(0.2f, 0.2f, 0.2f);
-	glm::vec3 plDiffuse(0.5f, 0.5f, 0.5f);
-	glm::vec3 plSpecular(1.0f, 1.0f, 1.0f);
-
-	float attConst = 1.0f;
-	float attLinear = 0.09f;
-	float attQuadrat = 0.032f;
-
-	// Point Light
-	glm::vec3 dlDirection(-1.0f, -1.0f, 3.0f);
-
-	glm::vec3 dlAmbient(0.1f, 0.1f, 0.1f);
-	glm::vec3 dlDiffuse(0.3f, 0.3f, 0.3f);
-	glm::vec3 dlSpecular(1.0f, 1.0f, 1.0f);
+	// Light
+	LightManager lightManager;
+	LightEditor lightEditor(lightManager);
 	
 	// Material
-	/*glm::vec3 objectAmbient(0.25f, 0.25f, 0.25f);
-	glm::vec3 objectDiffuse(0.4f, 0.4f, 0.4f);
-	glm::vec3 objectSpecular(0.78f, 0.78f, 0.78f);
-	float objectShininess = 0.6f;*/
-
 	glm::vec3 objectPositions[] = {
 		glm::vec3(0.0f,  0.0f,  0.0f),
 		glm::vec3(2.0f,  5.0f, 10.0f),
@@ -277,37 +260,7 @@ int main()
 
 		//std::cout << "Frame Time: " << deltaTime << " seconds" << std::endl;
 
-		ImGui::Begin("Light Editor");
-
-		// Adjust point light position
-		if (ImGui::CollapsingHeader("Point Light")) {
-			// Add UI elements within the collapsible section
-			ImGui::Text("Light Position");
-			ImGui::SliderFloat3("Position", &plPosition[0], -15.0f, 15.0f);
-
-			// Adjust light colors
-			ImGui::Text("Light Colors");
-			ImGui::ColorEdit3("PL Ambient", &plAmbient[0]);
-			ImGui::ColorEdit3("PL Diffuse", &plDiffuse[0]);
-			ImGui::ColorEdit3("PL Specular", &plSpecular[0]);
-			ImGui::SliderFloat("PL Constant", &attConst, 0.0f, 1.0f);
-			ImGui::SliderFloat("PL Linear", &attLinear, 0.0f, 1.0f);
-			ImGui::SliderFloat("PL Quadratic", &attQuadrat, 0.0f, 1.0f);
-		}
-
-		if (ImGui::CollapsingHeader("Directional Light")) {
-			// Add UI elements within the collapsible section
-			ImGui::Text("Light Direction");
-			ImGui::SliderFloat3("DL Direction", &dlDirection[0], -15.0f, 15.0f);
-
-			// Adjust light colors
-			ImGui::Text("Light Colors");
-			ImGui::ColorEdit3("DL Ambient", &dlAmbient[0]);
-			ImGui::ColorEdit3("DL Diffuse", &dlDiffuse[0]);
-			ImGui::ColorEdit3("DL Specular", &dlSpecular[0]);
-		}
-
-		ImGui::End();
+		lightEditor.BuildGUI();
 
 		ImGui::Begin("Material Editor");
 
@@ -339,7 +292,7 @@ int main()
 		defaultShader.SetMat4("view", view);
 
 		glm::mat4 lightModel = glm::mat4(1.0f);
-		lightModel = glm::translate(lightModel, plPosition);
+		lightModel = glm::translate(lightModel, lightManager.pl.position);
 		defaultShader.SetMat4("model", lightModel);
 
 		// Check why this VAO is not working: using objectVAO it works
@@ -376,18 +329,9 @@ int main()
 			phongLightShader.SetFloat("material.shininess", objectShininess);
 
 			// Lighting
-			phongLightShader.SetVec3("directionLight.direction", dlDirection);
-			phongLightShader.SetVec3("directionLight.ambient", dlAmbient);
-			phongLightShader.SetVec3("directionLight.diffuse", dlDiffuse);
-			phongLightShader.SetVec3("directionLight.specular", dlSpecular);
+			lightManager.Use(phongLightShader);
 
-			phongLightShader.SetVec3("pointLight.position", plPosition);
-			phongLightShader.SetVec3("pointLight.ambient", plAmbient);
-			phongLightShader.SetVec3("pointLight.diffuse", plDiffuse);
-			phongLightShader.SetVec3("pointLight.specular", plSpecular);
-			phongLightShader.SetFloat("pointLight.constant", attConst);
-			phongLightShader.SetFloat("pointLight.linear", attLinear);
-			phongLightShader.SetFloat("pointLight.quadratic", attQuadrat);
+			// Settings
 			phongLightShader.SetVec3("viewPos", mainCamera.Position);
 			phongLightShader.SetBool("toonMode", true);
 

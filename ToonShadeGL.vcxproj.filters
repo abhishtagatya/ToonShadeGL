@@ -60,6 +60,12 @@
     <ClCompile Include="torus.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="light_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="light_editor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shader.h">
@@ -102,6 +108,12 @@
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
     <ClInclude Include="torus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="light_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="light_editor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
