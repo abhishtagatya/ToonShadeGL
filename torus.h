@@ -8,10 +8,15 @@
 #include <vector>
 #include <cmath>
 
+#include "primitive_model.h"
+
 class Torus {
 public:
+
+    PrimitiveModel pm;
+
     Torus(float innerRadius, float outerRadius, int sides, int rings)
-        : innerRadius(innerRadius), outerRadius(outerRadius), sides(sides), rings(rings) {
+        : innerRadius(innerRadius), outerRadius(outerRadius), sides(sides), rings(rings), pm(nullptr, nullptr, 0, 0) {
         // Calculate total number of vertices and indices
         totalVertices = (sides + 1) * (rings + 1);
         totalIndices = sides * rings * 6; // 6 indices per quad
@@ -22,6 +27,11 @@ public:
         indices = new unsigned int[totalIndices];
 
         generateTorus();
+
+        float* data = combinePositionAndNormal();
+
+        pm = PrimitiveModel(data, indices, totalVertices * 6, totalIndices);
+        delete[] data;
     }
 
     ~Torus() {
@@ -62,6 +72,21 @@ public:
             combined[i * 6 + 5] = normals[i * 3 + 2];  // Normal z
         }
         return combined;
+    }
+
+    void Draw(Shader& shader)
+    {
+        pm.Draw(shader); // Call the draw method of PrimitiveModel
+    }
+
+    void DrawBasic()
+    {
+        pm.DrawBasic(); // Call the draw method of PrimitiveModel
+    }
+
+    void Delete()
+    {
+        pm.Delete();
     }
 
 private:
