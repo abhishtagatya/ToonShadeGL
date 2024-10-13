@@ -1,5 +1,8 @@
 # ToonShadeGL
 
-> Simple Toon Shading Renderer with OpenGL/GLFW
+> Toon Shading Renderer with OpenGL/GLFW
 
-![](https://pbs.twimg.com/media/GZtFZruXQAMO15R?format=png&name=medium)
+### Gallery
+![](https://pbs.twimg.com/media/GZyqYlxWIAAlFq_?format=jpg&name=medium)
+
+
