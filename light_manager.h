@@ -35,6 +35,9 @@ class LightManager
 public:
 	PointLight pl;
 	DirectionalLight dl;
+	float outlineScale;
+
+
 
 	LightManager()
 	{
@@ -53,6 +56,8 @@ public:
 		this->dl.ambient = glm::vec3(0.1f, 0.1f, 0.1f);
 		this->dl.diffuse = glm::vec3(0.3f, 0.3f, 0.3f);
 		this->dl.specular = glm::vec3(1.0f, 1.0f, 1.0f);
+
+		this->outlineScale = 1.01;
 	}
 
 	void Use(Shader& shader) const 

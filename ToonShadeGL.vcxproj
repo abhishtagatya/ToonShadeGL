@@ -88,7 +88,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -117,7 +117,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,7 +138,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
-    <ClCompile Include="cone.cpp" />
     <ClCompile Include="cube.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Libraries\include\imgui\imgui.cpp" />
@@ -151,15 +150,17 @@
     <ClCompile Include="light_editor.cpp" />
     <ClCompile Include="light_manager.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="primitive_generate.cpp" />
+    <ClCompile Include="mesh.cpp" />
+    <ClCompile Include="model.cpp" />
     <ClCompile Include="primitive_mesh.cpp" />
     <ClCompile Include="primitive_model.cpp" />
+    <ClCompile Include="scene.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="texture.cpp" />
     <ClCompile Include="torus.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
-    <ClInclude Include="cone.h" />
     <ClInclude Include="cube.h" />
     <ClInclude Include="Libraries\include\imgui\imconfig.h" />
     <ClInclude Include="Libraries\include\imgui\imgui.h" />
@@ -172,20 +173,30 @@
     <ClInclude Include="Libraries\include\imgui\imstb_truetype.h" />
     <ClInclude Include="light_editor.h" />
     <ClInclude Include="light_manager.h" />
-    <ClInclude Include="primitive_generate.h" />
+    <ClInclude Include="mesh.h" />
+    <ClInclude Include="model.h" />
     <ClInclude Include="primitive_mesh.h" />
     <ClInclude Include="primitive_model.h" />
+    <ClInclude Include="scene.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="torus.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="Resources\Model\Mage.glb" />
     <None Include="Resources\Shaders\default.frag" />
     <None Include="Resources\Shaders\default.vert" />
     <None Include="Resources\Shaders\outline.frag" />
     <None Include="Resources\Shaders\outline.vert" />
     <None Include="Resources\Shaders\phong_light.frag" />
     <None Include="Resources\Shaders\phong_light.vert" />
+    <None Include="Resources\Shaders\phong_light_tex.frag" />
+    <None Include="Resources\Shaders\phong_light_tex.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\Model\blue_texture.png" />
+    <Image Include="Resources\Model\mage_texture.png" />
+    <Image Include="Resources\Model\red_texture.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

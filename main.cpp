@@ -17,10 +17,8 @@
 #include "light_manager.h"
 #include "light_editor.h"
 
-// Primitives
-#include "cube.h"
-#include "torus.h"
-#include "cone.h"
+#include "scene.h"
+#include "model.h"
 
 void framebufferSizeCB(GLFWwindow* window, int width, int height);
 void mouseCB(GLFWwindow* window, double xpos, double ypos);
@@ -113,8 +111,9 @@ int main()
 
 	// DATA: START
 	//Torus torus(0.5f, 1.0f, 16, 16);
-	Cube lightCube;
-	Cone cone(1.0f, 2.0f, 30);
+	//Cube lightCube;
+	Model mage("Resources/Model/Mage.glb", "mage_texture.png", false);
+	Model donut("Resources/Model/torus.fbx", "texture.png", false);
 	// DATA: END
 
 	// Light
@@ -134,14 +133,12 @@ int main()
 		glm::vec3(-14.3f,  -4.0f, -1.5f)
 	};
 
-	glm::vec3 objectAmbient(1.0f, 0.5f, 0.31f);
-	glm::vec3 objectDiffuse(1.0f, 0.5f, 0.31f);
-	glm::vec3 objectSpecular(0.5f, 0.5f, 0.5f);
-	float objectShininess = 32.0f;
+	// Scene
+	Scene toonScene(lightManager);
+	toonScene.Add(mage, glm::vec3(0.0f, 0.0f, 0.0f));
+	toonScene.Add(donut, glm::vec3(0.0f, 0.0f, -5.0f));
 
-	float outlineScale = 1.05f;
-
-	Shader phongLightShader("Resources/Shaders/phong_light.vert", "Resources/Shaders/phong_light.frag");
+	Shader phongLightShader("Resources/Shaders/phong_light_tex.vert", "Resources/Shaders/phong_light_tex.frag");
 	Shader outlineShader("Resources/Shaders/outline.vert", "Resources/Shaders/outline.frag");
 	Shader defaultShader("Resources/Shaders/default.vert", "Resources/Shaders/default.frag");
 
@@ -161,20 +158,6 @@ int main()
 		//std::cout << "Frame Time: " << deltaTime << " seconds" << std::endl;
 
 		lightEditor.BuildGUI();
-
-		ImGui::Begin("Material Editor");
-
-		// Adjust material colors
-		ImGui::Text("Material Colors");
-		ImGui::ColorEdit3("Ambient", &cone.pm.matertial.ambient[0]);
-		ImGui::ColorEdit3("Diffuse", &cone.pm.matertial.diffuse[0]);
-		ImGui::ColorEdit3("Specular", &cone.pm.matertial.specular[0]);
-
-		//// Adjust material shininess
-		ImGui::Text("Material Shininess");
-		ImGui::SliderFloat("Shininess", &cone.pm.matertial.shininess, 0.0f, 128.0f);
-
-		ImGui::End();
 		// GUI: END
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -186,69 +169,8 @@ int main()
 		glm::mat4 proj = mainCamera.GetProjectionMatrix((float)SCREEN_WIDTH / SCREEN_HEIGHT);
 		glm::mat4 view = mainCamera.GetViewMatrix();
 
-		for (unsigned int i = 0; i < sizeof(objectPositions) / sizeof(glm::vec3); i++)
-		{
-			float angle = 20.0f * i;
-
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, objectPositions[i]);
-			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			model = glm::scale(model, glm::vec3(outlineScale));
-
-			// 1st Pass : Phong Shading
-			glStencilFunc(GL_ALWAYS, 1, 0xFF);
-			glStencilMask(0xFF);
-			glEnable(GL_CULL_FACE);
-			glCullFace(GL_BACK);
-
-			phongLightShader.Use();
-
-			phongLightShader.SetMat4("projection", proj);
-			phongLightShader.SetMat4("view", view);
-			phongLightShader.SetMat4("model", model);
-
-			// Lighting
-			lightManager.Use(phongLightShader);
-
-			// Settings
-			phongLightShader.SetVec3("viewPos", mainCamera.Position);
-			phongLightShader.SetBool("toonMode", true);
-
-			cone.Draw(phongLightShader);
-			checkOpenGLError("Draw Torus");
-
-			glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-			glStencilMask(0x00);  // Enable stencil writing
-			glCullFace(GL_FRONT);
-
-			outlineShader.Use();
-
-			model = glm::scale(model, glm::vec3(outlineScale));
-			outlineShader.SetMat4("projection", proj);
-			outlineShader.SetMat4("view", view);
-			outlineShader.SetMat4("model", model);
-
-			cone.Draw(outlineShader);
-
-			glStencilFunc(GL_ALWAYS, 1, 0xFF);
-			glStencilMask(0xFF);
-
-			glCullFace(GL_BACK);
-
-			glClear(GL_STENCIL_BUFFER_BIT);
-		}
-
-		// Light Object
-		defaultShader.Use();
-		defaultShader.SetMat4("projection", proj);
-		defaultShader.SetMat4("view", view);
-
-		glm::mat4 lightModel = glm::mat4(1.0f);
-		lightModel = glm::translate(lightModel, lightManager.pl.position);
-		defaultShader.SetMat4("model", lightModel);
-
-		lightCube.DrawBasic();
-		checkOpenGLError("Draw Cube");
+		// Render
+		toonScene.Render(proj, view, mainCamera.Position, phongLightShader, outlineShader);
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -263,9 +185,7 @@ int main()
 		glfwPollEvents();
 	}
 
-	lightCube.Delete();
-	cone.Delete();
-
+	donut.Delete();
 	phongLightShader.Delete();
 	defaultShader.Delete();
 

@@ -22,6 +22,9 @@
     <Filter Include="Header Files\imgui">
       <UniqueIdentifier>{6e4d191e-6750-4398-b694-c1f8facd080f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Model">
+      <UniqueIdentifier>{e1e40d37-591d-4c15-9a42-ed523099ffba}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="glad.c">
@@ -75,10 +78,16 @@
     <ClCompile Include="primitive_model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="primitive_generate.cpp">
+    <ClCompile Include="mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="cone.cpp">
+    <ClCompile Include="model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scene.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -134,10 +143,13 @@
     <ClInclude Include="primitive_model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="primitive_generate.h">
+    <ClInclude Include="mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cone.h">
+    <ClInclude Include="model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -161,5 +173,25 @@
     <None Include="Resources\Shaders\outline.frag">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="Resources\Model\Mage.glb">
+      <Filter>Resource Files\Model</Filter>
+    </None>
+    <None Include="Resources\Shaders\phong_light_tex.frag">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="Resources\Shaders\phong_light_tex.vert">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\Model\mage_texture.png">
+      <Filter>Resource Files\Model</Filter>
+    </Image>
+    <Image Include="Resources\Model\blue_texture.png">
+      <Filter>Resource Files\Model</Filter>
+    </Image>
+    <Image Include="Resources\Model\red_texture.png">
+      <Filter>Resource Files\Model</Filter>
+    </Image>
   </ItemGroup>
 </Project>
