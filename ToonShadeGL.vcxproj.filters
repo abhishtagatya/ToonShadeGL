@@ -60,22 +60,10 @@
     <ClCompile Include="Libraries\include\imgui\imgui_impl_opengl3.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="torus.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="light_manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="light_editor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="cube.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="primitive_mesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="primitive_model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mesh.cpp">
@@ -125,22 +113,10 @@
     <ClInclude Include="Libraries\include\imgui\imgui_impl_opengl3_loader.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="torus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="light_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="light_editor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="cube.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="primitive_mesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="primitive_model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mesh.h">

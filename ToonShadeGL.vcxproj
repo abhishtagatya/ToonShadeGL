@@ -138,7 +138,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
-    <ClCompile Include="cube.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="Libraries\include\imgui\imgui.cpp" />
     <ClCompile Include="Libraries\include\imgui\imgui_demo.cpp" />
@@ -152,16 +151,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="mesh.cpp" />
     <ClCompile Include="model.cpp" />
-    <ClCompile Include="primitive_mesh.cpp" />
-    <ClCompile Include="primitive_model.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="texture.cpp" />
-    <ClCompile Include="torus.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
-    <ClInclude Include="cube.h" />
     <ClInclude Include="Libraries\include\imgui\imconfig.h" />
     <ClInclude Include="Libraries\include\imgui\imgui.h" />
     <ClInclude Include="Libraries\include\imgui\imgui_impl_glfw.h" />
@@ -175,11 +170,8 @@
     <ClInclude Include="light_manager.h" />
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
-    <ClInclude Include="primitive_mesh.h" />
-    <ClInclude Include="primitive_model.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="shader.h" />
-    <ClInclude Include="torus.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
